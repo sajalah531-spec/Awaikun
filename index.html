@@ -3,43 +3,66 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>AWA AI Chat</title>
+<title>Awa AI</title>
 <style>
-:root { --purple: #7c3aed; --pink: #a855f7; --dark: #0b0b0b; --card: #1c1c1c; }
-* { margin:0; padding:0; box-sizing:border-box; font-family:'Inter', system-ui, sans-serif; }
-body { background: radial-gradient(1200px 600px at 80% -10%, #1a0033 0%, var(--dark) 60%); color:#fff; height:100vh; display:flex; justify-content:center; align-items:center; padding:20px; }
-.chat-wrapper { width:100%; max-width:600px; height:90vh; background: rgba(20,20,20,0.6); backdrop-filter: blur(20px); border:1px solid rgba(124,58,237,0.3); border-radius:24px; display:flex; flex-direction:column; overflow:hidden; box-shadow: 0 0 40px #7c3aed33; }
-.header { display:flex; align-items:center; gap:12px; padding:16px 20px; border-bottom:1px solid rgba(255,255,255,0.1); }
-.avatar { width:44px; height:44px; border-radius:50%; border:2px solid var(--pink); box-shadow:0 0 15px var(--pink); object-fit: cover; }
-.header h3 { font-size:18px; } .header span { font-size:12px; color:#22c55e; }
-.messages { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:16px; }
-.bubble { padding:14px 18px; border-radius:18px; max-width:85%; line-height:1.5; animation:fadeIn .3s ease; }
-@keyframes fadeIn { from{opacity:0; transform:translateY(10px);} to{opacity:1; transform:translateY(0);} }
-.bot { background: var(--card); border:1px solid rgba(124,58,237,0.2); border-radius:18px 18px 18px 6px; align-self:flex-start; }
-.user { background: linear-gradient(135deg, var(--purple), var(--pink)); border-radius:18px 18px 6px 18px; align-self:flex-end; }
-.input-area { padding:16px 20px; border-top:1px solid rgba(255,255,255,0.1); display:flex; gap:10px; }
-.input-area input { flex:1; padding:14px 18px; border-radius:24px; border:1px solid rgba(255,255,255,0.1); background: var(--card); color:#fff; outline:none; }
-.input-area input:focus { border-color:var(--purple); box-shadow:0 0 10px var(--purple); }
-.input-area button { padding:14px 24px; border-radius:24px; border:none; background: var(--purple); color:#fff; font-weight:600; cursor:pointer; transition:.2s; }
-.input-area button:hover { background: var(--pink); transform:scale(1.05); }
+body{background:#0b0b0b;color:#fff;font-family:system-ui;margin:0;display:flex;justify-content:center;align-items:center;height:100vh}
+.chat{width:100%;max-width:700px;height:90vh;background:#1c1c1c;border-radius:20px;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:16px;border-bottom:1px solid #333;display:flex;gap:12px;align-items:center}
+.header img{width:44px;height:44px;border-radius:50%}
+.messages{flex:1;padding:20px;overflow-y:auto;display:flex;flex-direction:column;gap:12px}
+.bubble{padding:14px 18px;border-radius:18px;max-width:80%;white-space:pre-wrap}
+.user{background:#7c3aed;align-self:flex-end;border-radius:18px 18px 6px 18px}
+.bot{background:#2a2a2a;align-self:flex-start;border-radius:18px 18px 18px 6px}
+.input{display:flex;gap:10px;padding:16px;border-top:1px solid #333}
+.input input{flex:1;padding:14px;border-radius:24px;border:1px solid #333;background:#111;color:#fff;outline:none}
+.input button{padding:14px 24px;border-radius:24px;border:none;background:#7c3aed;color:#fff;font-weight:600;cursor:pointer}
+.input button:disabled{opacity:.5}
 </style>
 </head>
 <body>
-<div class="chat-wrapper">
+<div class="chat">
   <div class="header">
-    <img class="avatar" src="https://i.imgur.com/EbNXczP.jpeg">
-    <div>
-      <h3>AWA AI</h3>
-      <span>Online</span>
-    </div>
+    <img src="https://i.imgur.com/EbNXczP.jpeg" alt="Awa">
+    <h3>Awa AI</h3>
   </div>
-  <div class="messages">
-    <!-- Kosong, nanti diisi JS -->
-  </div>
-  <div class="input-area">
-    <input placeholder="Ketik pesan ke AWA...">
-    <button>Kirim</button>
+  <div class="messages" id="messages"></div>
+  <div class="input">
+    <input id="userInput" placeholder="Mau curhat apa?" autocomplete="off">
+    <button id="sendBtn">Kirim</button>
   </div>
 </div>
+
+<script>
+const messages = document.getElementById('messages');
+const input = document.getElementById('userInput');
+const btn = document.getElementById('sendBtn');
+const USER_ID = "user-" + Math.random().toString(36).substr(2, 9);
+
+async function sendMessage() {
+  const text = input.value.trim();
+  if(!text) return;
+  
+  messages.innerHTML += `<div class="bubble user">${text}</div>`;
+  input.value = '';
+  btn.disabled = true;
+
+  messages.innerHTML += `<div class="bubble bot" id="typing">...</div>`;
+
+  const res = await fetch('/api/chat', { 
+    method: 'POST',
+    headers: {'Content-Type':'application/json'},
+    body: JSON.stringify({ inputs: {}, query: text, response_mode: "blocking", user: USER_ID })
+  });
+  
+  const data = await res.json();
+  document.getElementById('typing').remove();
+  messages.innerHTML += `<div class="bubble bot">${data.answer || 'diam gak mood gw 😑'}</div>`;
+  btn.disabled = false;
+  messages.scrollTop = messages.scrollHeight;
+}
+
+btn.onclick = sendMessage;
+input.onkeypress = e => e.key === 'Enter' && sendMessage();
+</script>
 </body>
-</html>
+  </html>
